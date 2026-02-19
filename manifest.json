@@ -1,0 +1,29 @@
+{
+    "name": "PseudoPy — Automated Code Generation",
+    "short_name": "PseudoPy",
+    "description": "Bridging Pseudocode and Python: An Algorithmic Approach to Automated Code Generation",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#06060b",
+    "theme_color": "#3b82f6",
+    "orientation": "any",
+    "categories": [
+        "education",
+        "productivity",
+        "developer tools"
+    ],
+    "icons": [
+        {
+            "src": "icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ]
+}
