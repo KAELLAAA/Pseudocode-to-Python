@@ -35,18 +35,51 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- ════════════════════════════════════════
-       LOGIN PAGE
+       LOGIN PAGE — Split Layout
        ════════════════════════════════════════ -->
   <div id="login-page" class="login-page">
-    <div class="login-container">
-      <div class="login-logo">
-        <div class="logo-icon">⚡</div>
-        <h1>PseudoPy</h1>
-        <p>Bridging Pseudocode and Python — An Algorithmic Approach to Automated Code Generation</p>
+
+    <!-- ── Left Hero Panel ── -->
+    <div class="login-hero">
+      <div class="hero-bg-shapes">
+        <div class="hero-shape hero-shape-1"></div>
+        <div class="hero-shape hero-shape-2"></div>
+        <div class="hero-shape hero-shape-3"></div>
       </div>
+      <div class="hero-content">
+        <div class="hero-logo">
+          <div class="logo-icon">⚡</div>
+          <span class="logo-text">PseudoPy</span>
+        </div>
+        <h1 class="hero-tagline">
+          Transform<br>your ideas<br>into <span class="hero-highlight">code</span>.
+        </h1>
+        <p class="hero-subtitle">Bridging Pseudocode and Python — An Algorithmic Approach to Automated Code Generation
+        </p>
+
+        <!-- Decorative floating code card -->
+        <div class="hero-code-card">
+          <div class="code-card-header">
+            <span class="code-dot red"></span>
+            <span class="code-dot yellow"></span>
+            <span class="code-dot green"></span>
+            <span class="code-card-title">main.py</span>
+          </div>
+          <pre class="code-card-body"><span class="code-kw">def</span> <span class="code-fn">greet</span>(name):
+    <span class="code-kw">return</span> <span class="code-str">f"Hello, {name}!"</span>
+
+<span class="code-fn">print</span>(<span class="code-fn">greet</span>(<span class="code-str">"World"</span>))</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right Form Panel ── -->
+    <div class="login-form-section">
       <div class="login-card">
-        <h2>Sign In</h2>
-        <p>Enter your credentials and select your role to continue.</p>
+        <div class="login-card-header">
+          <h2>Sign In</h2>
+          <p>Enter your credentials and select your role to continue.</p>
+        </div>
 
         <div class="form-group">
           <label>Username</label>
@@ -88,6 +121,10 @@
         <button class="btn btn-primary" onclick="handleLogin()">
           Sign In →
         </button>
+
+        <div class="login-footer-text">
+          <span>Pseudocode to Python &copy; 2026</span>
+        </div>
       </div>
     </div>
   </div>
