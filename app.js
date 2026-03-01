@@ -1006,3 +1006,22 @@ function installPWA() {
 if (window.navigator.standalone === true) {
     document.body.classList.add('ios-standalone');
 }
+
+/**
+ * Toggles visibility of a password field.
+ * @param {string} inputId The ID of the password input element
+ * @param {HTMLElement} btn The button element to update the icon
+ */
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈'; // Closed eye
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️'; // Open eye
+    }
+}
+window.togglePasswordVisibility = togglePasswordVisibility;
