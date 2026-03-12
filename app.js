@@ -25,13 +25,7 @@ let cachedActivity = [];
 async function init() {
     console.log('[App] init() called');
     try {
-        // === CLEANUP: Clear history + reset mdaet password ===
-        const _pw = await passwordRequestsRef.get();
-        for (const d of _pw.docs) { await d.ref.delete(); }
-        const _u = await usersRef.where('username', '==', 'mdaet').get();
-        for (const d of _u.docs) { await d.ref.update({ password: 'pass123' }); }
-        console.log('[App] Cleanup done: history cleared, mdaet=pass123');
-        // === END CLEANUP (remove after confirming) ===
+
 
         console.log('[App] Calling seedDatabase()...');
         // Seed the database if collections are empty
