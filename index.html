@@ -332,8 +332,14 @@ END</textarea>
         </div>
         <div class="editor-layout" style="height:calc(100vh - 220px)">
           <div class="editor-panel">
-            <div class="panel-header">
-              <h3>📝 Input <span class="lang-badge pseudo">Pseudocode</span></h3>
+            <div class="panel-header" style="justify-content: space-between;">
+              <div style="display:flex; align-items:center;">
+                <h3>📝 Input <span class="lang-badge pseudo">Pseudocode</span></h3>
+              </div>
+              <div>
+                <input type="file" id="upload-translate-file" accept=".txt,.pdf" style="display:none" onchange="handleFileUpload(event, 'translate-input')">
+                <label for="upload-translate-file" class="btn btn-ghost btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; font-weight: 500;"><span style="font-size:1.1rem">📄</span> Upload File</label>
+              </div>
             </div>
             <div class="panel-body">
               <textarea id="translate-input" class="code-editor" spellcheck="false"
@@ -563,8 +569,14 @@ print("Done!")</textarea>
         </div>
         <div class="editor-layout" style="height:calc(100vh - 220px)">
           <div class="editor-panel">
-            <div class="panel-header">
-              <h3>📝 Pseudocode <span class="lang-badge pseudo">Pseudocode</span></h3>
+            <div class="panel-header" style="justify-content: space-between;">
+              <div style="display:flex; align-items:center;">
+                <h3>📝 Pseudocode <span class="lang-badge pseudo">Pseudocode</span></h3>
+              </div>
+              <div>
+                <input type="file" id="upload-instructor-file" accept=".txt,.pdf" style="display:none" onchange="handleFileUpload(event, 'instructor-pseudo-input')">
+                <label for="upload-instructor-file" class="btn btn-ghost btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; font-weight: 500;"><span style="font-size:1.1rem">📄</span> Upload File</label>
+              </div>
             </div>
             <div class="panel-body">
               <textarea id="instructor-pseudo-input" class="code-editor" spellcheck="false"
@@ -986,6 +998,10 @@ print("Done!")</textarea>
   <!-- Skulpt for Python execution -->
   <script src="https://skulpt.org/js/skulpt.min.js" type="text/javascript"></script>
   <script src="https://skulpt.org/js/skulpt-stdlib.js" type="text/javascript"></script>
+
+  <!-- PDF.js for PDF text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
   <!-- App Logic -->
   <script src="app.js"></script>
