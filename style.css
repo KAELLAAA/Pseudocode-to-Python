@@ -2023,7 +2023,6 @@ select.form-input {
 }
 
 /* ============================================================
-<<<<<<< HEAD
    CHANGE PASSWORD PAGE
    ============================================================ */
 
@@ -2051,7 +2050,9 @@ select.form-input {
 .pwd-masked {
   letter-spacing: 2px;
   color: var(--text-secondary);
-=======
+}
+
+/* ============================================================
    STUDENT SETTINGS — PROFILE & PASSWORD CHANGE
    ============================================================ */
 
@@ -2312,5 +2313,4 @@ select.form-input {
     align-items: flex-start;
     gap: 0.35rem;
   }
->>>>>>> e00e2abd3968bd03a00d214cd296ec371bfb54f5
 }

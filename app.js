@@ -225,12 +225,9 @@ function navigateTo(pageId) {
         'generate-code': 'Generate Python Code',
         'manage-users': 'Administer User Accounts',
         'admin-execute': 'Execute Code',
-<<<<<<< HEAD
-        'change-password': 'Change Password'
-=======
+        'change-password': 'Change Password',
         'student-settings': 'Settings',
         'password-requests': 'Password Requests'
->>>>>>> e00e2abd3968bd03a00d214cd296ec371bfb54f5
     };
     document.getElementById('topbar-title').textContent = titles[pageId] || 'Dashboard';
 
