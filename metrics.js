@@ -294,7 +294,7 @@ class MetricsEngine {
         if (benchmarkData.avgPrecision + benchmarkData.avgRecall > 0) {
             benchmarkData.f1Score = parseFloat(
                 ((2 * benchmarkData.avgPrecision * benchmarkData.avgRecall) /
-                 (benchmarkData.avgPrecision + benchmarkData.avgRecall)).toFixed(1)
+                    (benchmarkData.avgPrecision + benchmarkData.avgRecall)).toFixed(1)
             );
         }
 
@@ -448,7 +448,7 @@ class MetricsEngine {
             const studentCount = studentKeywords[kw] || 0;
             const solutionCount = solutionKeywords[kw] || 0;
             const diff = studentCount - solutionCount;
-            
+
             if (diff < 0) {
                 gaps.push({
                     type: 'Missing Structure',
@@ -479,7 +479,7 @@ class MetricsEngine {
      */
     getConceptMastery() {
         if (!this.benchmarkResults) return [];
-        
+
         const conceptMap = {};
         for (const r of this.benchmarkResults.results) {
             if (!conceptMap[r.concept]) {
