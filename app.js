@@ -454,7 +454,7 @@ function runPythonCode(code, outputElementId) {
                 p = p.trim();
                 if (!p.startsWith('"') && !p.startsWith("'") && !p.match(/^str\(/)) return `str(${p})`;
                 return p;
-            }); 
+            });
             return `print(${parts.join(' + ')})`;
         }
         return match;
@@ -528,8 +528,13 @@ function runPythonCode(code, outputElementId) {
                     }
                     container.replaceWith(echo);
 
-                    // Always return raw string — Python int()/float() in generated code handles casting
-                    resolve(value);
+                    // Automatic type-check for mathematical operations
+                    const trimmed = value.trim();
+                    if (trimmed !== "" && !isNaN(trimmed)) {
+                        resolve(parseFloat(trimmed));
+                    } else {
+                        resolve(value);
+                    }
 
                 }
 

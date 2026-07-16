@@ -38,7 +38,7 @@ const TOKEN_TYPES = {
 const COMPILER_KEYWORDS = new Set([
     'BEGIN', 'END', 'DECLARE', 'AS',
     'INTEGER', 'STRING', 'ARRAY', 'BOOLEAN', 'FLOAT', 'REAL',
-    'CHAR', 'CHARACTER', 'BOOL', 'DICTIONARY',
+    'CHAR', 'CHARACTER', 'BOOL',
     'IF', 'THEN', 'ELSE', 'ENDIF',
     'FOR', 'FROM', 'TO', 'EACH', 'IN', 'DO', 'ENDFOR',
     'WHILE', 'ENDWHILE',
@@ -48,8 +48,7 @@ const COMPILER_KEYWORDS = new Set([
     'IS', 'A', 'NUMBER', 'NUMERIC',
     'FUNCTION', 'PROCEDURE', 'RETURN', 'CALL',
     'INCREMENT', 'DECREMENT', 'APPEND',
-    'WITH', 'PROMPT',
-    'KEYS', 'OF', 'LENGTH'
+    'WITH', 'PROMPT'
 ]);
 
 // ── Sentinel Keywords (required block terminators) ───────────
@@ -193,7 +192,7 @@ class Lexer {
             }
 
             // ── Single-char operators & punctuation ──
-            if ('+-*/%,()[]:.{}'.includes(ch)) {
+            if ('+-*/%,()[]:.'.includes(ch)) {
                 this.tokens.push({ type: TOKEN_TYPES.OPERATOR, value: this.advance(), line: this.line });
                 continue;
             }
@@ -372,7 +371,7 @@ class Parser {
         return null;
     }
 
-    // ── DECLARE x AS INTEGER | DECLARE x AS <expression> ──
+    // ── DECLARE x AS INTEGER ──
     parseDeclare() {
         const kw = this.consume();
         const id = this.match(TOKEN_TYPES.IDENTIFIER);
@@ -383,30 +382,11 @@ class Parser {
         if (!this.match(TOKEN_TYPES.KEYWORD, 'AS')) {
             this.errors.push({ line: kw.line, message: 'Expected AS after variable name in DECLARE.', suggestion: 'Example: DECLARE ' + id.value + ' AS INTEGER' });
         }
-
-        // Check if what follows AS is a pure type keyword (simple declaration)
-        const next = this.peek();
-        const TYPE_KEYWORDS = new Set(['INTEGER', 'STRING', 'ARRAY', 'BOOLEAN', 'FLOAT', 'REAL', 'CHAR', 'CHARACTER', 'BOOL', 'DICTIONARY']);
-
-        if (next.type === TOKEN_TYPES.KEYWORD && TYPE_KEYWORDS.has(next.value)) {
-            // Check if this is truly a type-only declaration (nothing meaningful after the type on this line)
-            const afterType = this.peek(1);
-            if (afterType.type === TOKEN_TYPES.NEWLINE || afterType.type === TOKEN_TYPES.EOF) {
-                const typeToken = this.consume();
-                return { type: 'DeclareStatement', id: id.value, varType: typeToken.value, line: kw.line };
-            }
-        }
-
-        // Otherwise, treat as computed declaration: DECLARE x AS <expression>
-        // This handles: DECLARE keys_list AS Keys of dict
-        //               DECLARE n AS Length of arr
-        //               DECLARE x AS arr[i]
-        //               DECLARE x AS dict[key]
-        const expr = this.collectLineTokens();
-        return { type: 'AssignmentStatement', id: id.value, expr: expr, line: kw.line };
+        const typeToken = this.consume();
+        return { type: 'DeclareStatement', id: id.value, varType: typeToken ? typeToken.value : 'UNKNOWN', line: kw.line };
     }
 
-    // ── SET x TO expr | SET dict[key] TO expr  →  x = expr ──
+    // ── SET x TO expr  →  x = expr ──
     parseSet() {
         const kw = this.consume();
         const id = this.match(TOKEN_TYPES.IDENTIFIER);
@@ -414,22 +394,6 @@ class Parser {
             this.errors.push({ line: kw.line, message: 'Expected variable name after SET.', suggestion: 'Example: SET x TO 5' });
             return null;
         }
-
-        // Check for bracket-access: SET dict[key] TO value
-        if (this.peek().type === TOKEN_TYPES.OPERATOR && this.peek().value === '[') {
-            this.consume(); // consume [
-            const indexExpr = this.collectLineTokens([']']);
-            if (this.peek().value === ']') this.consume(); // consume ]
-            // Now expect TO
-            if (!this.match(TOKEN_TYPES.KEYWORD, 'TO')) {
-                if (!this.match(TOKEN_TYPES.OPERATOR, '=')) {
-                    this.errors.push({ line: kw.line, message: 'Expected TO after SET ' + id.value + '[...].', suggestion: 'Use: SET ' + id.value + '[key] TO value' });
-                }
-            }
-            const valueExpr = this.collectLineTokens();
-            return { type: 'ArrayAssignStatement', id: id.value, index: indexExpr, expr: valueExpr, line: kw.line };
-        }
-
         if (!this.match(TOKEN_TYPES.KEYWORD, 'TO')) {
             if (!this.match(TOKEN_TYPES.OPERATOR, '=')) {
                 // Levenshtein: did they misspell TO?
@@ -774,7 +738,8 @@ class SemanticAnalyzer {
                 break;
             case 'DeclareStatement': {
                 const isNumeric = ['INTEGER', 'FLOAT', 'NUMERIC', 'REAL', 'NUMBER'].includes(node.varType.toUpperCase());
-                this.symbolTable.set(node.id, { type: isNumeric ? 'numeric' : 'unknown' });
+                const isString = ['STRING', 'CHARACTER', 'CHAR'].includes(node.varType.toUpperCase());
+                this.symbolTable.set(node.id, { type: isNumeric ? 'numeric' : (isString ? 'string' : 'unknown') });
                 break;
             }
 
@@ -802,8 +767,7 @@ class SemanticAnalyzer {
                 this.checkExpr(node.expr);
                 break;
             case 'InputStatement':
-                // The Code Generator wraps INPUT in float(), so we treat it as numeric
-                this.symbolTable.set(node.id, { type: 'numeric' });
+                // No longer forcing to numeric to allow string inputs
                 break;
 
             case 'IfStatement':
@@ -816,17 +780,17 @@ class SemanticAnalyzer {
                 node.body.forEach(n => this.visitNode(n));
                 break;
             case 'ForStatement':
-                this.symbolTable.set(node.iterator, { type: 'numeric' }); // loop var implicitly declared
+                this.symbolTable.add(node.iterator); // loop var implicitly declared
                 this.checkExpr(node.startExpr);
                 this.checkExpr(node.endExpr);
                 node.body.forEach(n => this.visitNode(n));
                 break;
             case 'ForEachStatement':
-                this.symbolTable.set(node.iterator, { type: 'unknown' });
+                this.symbolTable.add(node.iterator);
                 node.body.forEach(n => this.visitNode(n));
                 break;
             case 'FunctionDef':
-                this.symbolTable.set(node.name, { type: 'unknown' });
+                this.symbolTable.add(node.name);
                 node.body.forEach(n => this.visitNode(n));
                 break;
             case 'IncDecStatement':
@@ -889,10 +853,10 @@ class SemanticAnalyzer {
 // The generated code is compatible with Skulpt's print() capture.
 // ══════════════════════════════════════════════════════════════
 class CodeGenerator {
-    constructor() {
+    constructor(symbolTable) {
         this.indentLevel = 0;   // Global indent_level
         this.lines = [];
-        this.declaredTypes = {}; // Track variable types from DECLARE for smart INPUT casting
+        this.symbolTable = symbolTable || new Map();
     }
 
     ind() {
@@ -915,35 +879,6 @@ class CodeGenerator {
                         case 'TRUE':  parts.push('True'); break;
                         case 'FALSE': parts.push('False'); break;
                         case 'NULL':  parts.push('None'); break;
-                        // KEYS OF dict → list(dict.keys())
-                        case 'KEYS': {
-                            const nextTok = (i + 1 < tokens.length) ? tokens[i + 1] : null;
-                            if (nextTok && nextTok.type === TOKEN_TYPES.KEYWORD && nextTok.value === 'OF') {
-                                // Collect the target expression after OF
-                                const remaining = tokens.slice(i + 2);
-                                const target = this.exprToStr(remaining);
-                                parts.push('list(' + target + '.keys())');
-                                i = tokens.length; // skip all remaining tokens
-                            } else {
-                                parts.push('keys');
-                            }
-                            break;
-                        }
-                        // LENGTH OF list → len(list)
-                        case 'LENGTH': {
-                            const nextTok2 = (i + 1 < tokens.length) ? tokens[i + 1] : null;
-                            if (nextTok2 && nextTok2.type === TOKEN_TYPES.KEYWORD && nextTok2.value === 'OF') {
-                                const remaining = tokens.slice(i + 2);
-                                const target = this.exprToStr(remaining);
-                                parts.push('len(' + target + ')');
-                                i = tokens.length; // skip all remaining tokens
-                            } else {
-                                parts.push('length');
-                            }
-                            break;
-                        }
-                        // OF — handled by KEYS/LENGTH above, fallthrough for standalone use
-                        case 'OF': parts.push('of'); break;
                         // IS NOT A NUMBER / IS A NUMBER → Python numeric check
                         case 'IS': {
                             // Look ahead for NOT A NUMBER / A NUMBER / NUMERIC
@@ -992,25 +927,7 @@ class CodeGenerator {
         if (!node) return;
         switch (node.type) {
             case 'DeclareStatement':
-                // Track declared type for smart INPUT casting
-                this.declaredTypes[node.id] = node.varType.toUpperCase();
-                // Emit initialization based on type
-                const upperType = node.varType.toUpperCase();
-                if (upperType === 'ARRAY') {
-                    this.lines.push(this.ind() + node.id + ' = []');
-                } else if (upperType === 'DICTIONARY') {
-                    this.lines.push(this.ind() + node.id + ' = {}');
-                } else if (upperType === 'INTEGER') {
-                    this.lines.push(this.ind() + node.id + ' = 0');
-                } else if (upperType === 'FLOAT' || upperType === 'REAL') {
-                    this.lines.push(this.ind() + node.id + ' = 0.0');
-                } else if (upperType === 'STRING' || upperType === 'CHAR' || upperType === 'CHARACTER') {
-                    this.lines.push(this.ind() + node.id + ' = ""');
-                } else if (upperType === 'BOOLEAN' || upperType === 'BOOL') {
-                    this.lines.push(this.ind() + node.id + ' = False');
-                } else {
-                    this.lines.push(this.ind() + '# DECLARE ' + node.id + ' AS ' + node.varType);
-                }
+                this.lines.push(this.ind() + '# DECLARE ' + node.id + ' AS ' + node.varType);
                 break;
 
             case 'AssignmentStatement':
@@ -1030,22 +947,19 @@ class CodeGenerator {
 
 
             case 'InputStatement': {
-                // Context-aware type casting based on DECLARE type
-                const declaredType = this.declaredTypes[node.id] || '';
-                const promptStr = (node.prompt && node.prompt.length > 0)
-                    ? node.prompt[0].value
-                    : '"Please enter ' + node.id + ': "';
-                let inputExpr = 'input(' + promptStr + ')';
-
-                // Smart wrapping: only cast when the declared type demands it
-                if (declaredType === 'INTEGER') {
-                    inputExpr = 'int(' + inputExpr + ')';
-                } else if (declaredType === 'FLOAT' || declaredType === 'REAL') {
-                    inputExpr = 'float(' + inputExpr + ')';
+                let promptStr = '"Please enter a value: "';
+                if (node.prompt && node.prompt.length > 0) {
+                    promptStr = node.prompt[0].value;
                 }
-                // STRING, CHAR, or undeclared → raw input() (no cast)
-
-                this.lines.push(this.ind() + node.id + ' = ' + inputExpr);
+                
+                const symInfo = this.symbolTable.get(node.id);
+                if (symInfo && symInfo.type === 'string') {
+                    // String input
+                    this.lines.push(this.ind() + node.id + ' = input(' + promptStr + ')');
+                } else {
+                    // Default to float for numeric or unknown to match previous behavior
+                    this.lines.push(this.ind() + node.id + ' = float(input(' + promptStr + '))');
+                }
                 break;
             }
 
@@ -1078,18 +992,14 @@ class CodeGenerator {
                 this.indentLevel--;  // indent_level decreases after END WHILE
                 break;
 
-            case 'ForStatement': {
-                // Wrap range() args in int() to prevent TypeError with float values
-                const startStr = this.exprToStr(node.startExpr.tokens);
-                const endStr = this.exprToStr(node.endExpr.tokens);
-                this.lines.push(this.ind() + 'for ' + node.iterator + ' in range(int(' + startStr + '), int(' + endStr + ') + 1):');
+            case 'ForStatement':
+                this.lines.push(this.ind() + 'for ' + node.iterator + ' in range(int(' + this.exprToStr(node.startExpr.tokens) + '), int(' + this.exprToStr(node.endExpr.tokens) + ') + 1):');
                 this.indentLevel++;
                 if (this.isBodyEffectivelyEmpty(node.body)) this.lines.push(this.ind() + 'pass');
                 else node.body.forEach(n => this.visitNode(n));
 
                 this.indentLevel--;
                 break;
-            }
 
             case 'ForEachStatement':
                 this.lines.push(this.ind() + 'for ' + node.iterator + ' in ' + this.exprToStr(node.iterable.tokens) + ':');
@@ -1236,7 +1146,7 @@ class PseudocodeCompiler {
 
         // ── Stage 4: Code Generation (SDT tree-walk) ──
         const t4 = performance.now();
-        const generator = new CodeGenerator();
+        const generator = new CodeGenerator(semanticAnalyzer.symbolTable);
         const pythonCode = generator.generate(ast);
         metrics.codeGenTime = parseFloat((performance.now() - t4).toFixed(3));
 
